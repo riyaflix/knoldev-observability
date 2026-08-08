@@ -35,21 +35,18 @@ jobs:
       - name: Load image into Kind
         run: kind load docker-image sample-api:v1 --name ci-cluster
 
-      - name: Wait for rollout (with retry)
+      - name: Deploy with Helm (wait + auto-rollback on failure)
         run: |
-          if ! kubectl rollout status deployment/sample-api --timeout=60s; then
-            echo "Rollout timed out, forcing ReplicaSet retry..."
-            kubectl delete replicaset -l app.kubernetes.io/instance=sample-api
-            sleep 5
-            if ! kubectl rollout status deployment/sample-api --timeout=60s; then
-              echo "Still failing — dumping debug info"
-              kubectl get pods -o wide
-              kubectl describe pods
-              kubectl get events --sort-by='.lastTimestamp'
-              kubectl get serviceaccount
-              exit 1
-            fi
-          fi
+          helm install sample-api ./helm/sample-api \
+            --wait --atomic --timeout=120s
+
+      - name: Debug on failure
+        if: failure()
+        run: |
+          kubectl get all -A
+          kubectl get events -A --sort-by='.lastTimestamp'
+          kubectl describe pods -A
+          helm list -A
 
       - name: Smoke test
         run: |
