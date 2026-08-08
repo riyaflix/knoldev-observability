@@ -35,18 +35,24 @@ jobs:
       - name: Load image into Kind
         run: kind load docker-image sample-api:v1 --name ci-cluster
 
-      - name: Deploy with Helm (wait + auto-rollback on failure)
+      - name: Deploy with Helm
         run: |
-          helm install sample-api ./helm/sample-api \
-            --wait --atomic --timeout=120s
+          helm install sample-api ./helm/sample-api --timeout=120s
+          kubectl rollout status deployment/sample-api --timeout=90s
 
       - name: Debug on failure
         if: failure()
         run: |
-          kubectl get all -A
-          kubectl get events -A --sort-by='.lastTimestamp'
-          kubectl describe pods -A
-          helm list -A
+          echo "===== PODS ====="
+          kubectl get pods -o wide
+          echo "===== DESCRIBE POD ====="
+          kubectl describe pods
+          echo "===== EVENTS ====="
+          kubectl get events --sort-by='.lastTimestamp'
+          echo "===== SERVICE ACCOUNT ====="
+          kubectl get serviceaccount
+          echo "===== HELM STATUS ====="
+          helm status sample-api
 
       - name: Smoke test
         run: |
