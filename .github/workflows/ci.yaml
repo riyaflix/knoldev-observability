@@ -38,6 +38,13 @@ jobs:
       - name: Deploy with Helm
         run: helm install sample-api ./helm/sample-api
 
+      - name: Debug - check pod status
+        run: |
+          sleep 10
+          kubectl get pods -o wide
+          kubectl describe pods
+          kubectl get events --sort-by='.lastTimestamp'
+
       - name: Wait for rollout
         run: kubectl rollout status deployment/sample-api --timeout=60s
 
