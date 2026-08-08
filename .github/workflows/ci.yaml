@@ -59,3 +59,4 @@ jobs:
           kubectl port-forward svc/sample-api 8080:8000 &
           sleep 5
           curl --fail http://localhost:8080/health
+          
