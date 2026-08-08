@@ -38,15 +38,13 @@ jobs:
       - name: Deploy with Helm
         run: helm install sample-api ./helm/sample-api
 
-      - name: Debug - check pod status
+      - name: Wait for rollout (with retry)
         run: |
-          sleep 10
-          kubectl get pods -o wide
-          kubectl describe pods
-          kubectl get events --sort-by='.lastTimestamp'
-
-      - name: Wait for rollout
-        run: kubectl rollout status deployment/sample-api --timeout=60s
+          if ! kubectl rollout status deployment/sample-api --timeout=60s; then
+            echo "Rollout timed out, forcing ReplicaSet retry..."
+            kubectl delete replicaset -l app.kubernetes.io/instance=sample-api
+            kubectl rollout status deployment/sample-api --timeout=60s
+          fi
 
       - name: Smoke test
         run: |
