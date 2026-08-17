@@ -1,0 +1,4 @@
+site_name: KnolDev Observability AI
+nav:
+  - Home: index.md
+  - Phase 1 - Platform Foundation: phase1.md
